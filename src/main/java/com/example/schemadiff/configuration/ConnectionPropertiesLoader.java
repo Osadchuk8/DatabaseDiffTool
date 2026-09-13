@@ -26,7 +26,9 @@ public final class ConnectionPropertiesLoader {
                 Path.of(required(properties, "source.file.path")),
                 required(properties, "source.file.schema"),
                 databaseSettings(properties, "target.db"),
-                Path.of(required(properties, "report.path"))
+                Path.of(required(properties, "report.path")),
+                required(properties, "groq.api.key"),
+                Path.of(required(properties, "report.ai.path"))
         );
     }
 

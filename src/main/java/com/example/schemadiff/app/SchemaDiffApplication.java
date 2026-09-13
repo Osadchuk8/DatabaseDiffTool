@@ -2,10 +2,12 @@ package com.example.schemadiff.app;
 
 import com.example.schemadiff.configuration.ConnectionPropertiesLoader;
 import com.example.schemadiff.configuration.ToolConfiguration;
+import com.example.schemadiff.core.diff.SchemaComparisonResult;
 import com.example.schemadiff.core.model.SchemaSnapshot;
 import com.example.schemadiff.infrastructure.file.PostgresDdlSchemaReader;
 import com.example.schemadiff.infrastructure.jdbc.JdbcSchemaReader;
 import com.example.schemadiff.infrastructure.report.MarkdownReportWriter;
+import com.example.schemadiff.service.AiApiRequestService;
 import com.example.schemadiff.service.ReportGenerationService;
 import com.example.schemadiff.service.SchemaComparisonService;
 import com.example.schemadiff.service.SchemaIntrospectionService;
@@ -13,6 +15,10 @@ import com.example.schemadiff.service.SchemaIntrospectionService;
 import java.nio.file.Path;
 
 public final class SchemaDiffApplication {
+
+    private final static String AI_REPORT_TITLE = "AI-suggestion report";
+    private final static String AI_API_REQUEST = "Suggest what is important in the provided database schema comparison";
+
     private SchemaDiffApplication() {
     }
 
@@ -32,8 +38,20 @@ public final class SchemaDiffApplication {
                 case FILE -> new PostgresDdlSchemaReader().read(configuration.sourceFile(), configuration.sourceFileSchema());
             };
 
-            var comparison = new SchemaComparisonService().compare(source, target);
-            new ReportGenerationService(new MarkdownReportWriter()).write(comparison, configuration.reportPath());
+            SchemaComparisonService comparisonService = new SchemaComparisonService();
+            SchemaComparisonResult comparison = comparisonService.compare(source, target);
+
+            ReportGenerationService reportService = new ReportGenerationService(new MarkdownReportWriter());
+            reportService.write(comparison, configuration.reportPath());
+
+
+            if(!comparison.matches()) {
+                AiApiRequestService aiApiRequestService = new AiApiRequestService(configuration.aiApiKey());
+                String stringComparisonResult = reportService.convertToString(comparison);
+                String aiFindings = aiApiRequestService.generate(AI_API_REQUEST + "\n" + stringComparisonResult);
+                reportService.write(aiFindings, AI_REPORT_TITLE, configuration.aiReportPath());
+            }
+
             System.out.printf("Compared %s to %s: %d difference(s).%nReport: %s%n", comparison.sourceName(),
                     comparison.targetName(), comparison.differences().size(), configuration.reportPath().toAbsolutePath());
         } catch (Exception exception) {

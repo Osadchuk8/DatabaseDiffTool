@@ -7,6 +7,8 @@ public record ToolConfiguration(
         Path sourceFile,
         String sourceFileSchema,
         DatabaseConnectionSettings targetDatabase,
-        Path reportPath
+        Path reportPath,
+        String aiApiKey,
+        Path aiReportPath
 ) {
 }

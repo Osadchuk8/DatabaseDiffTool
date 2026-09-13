@@ -34,6 +34,20 @@ public final class MarkdownReportWriter {
         Files.writeString(outputPath, report);
     }
 
+
+    public void write(String result, String reportTitle, Path outputPath) throws IOException {
+        Path parent = outputPath.toAbsolutePath().getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+        StringBuilder report = new StringBuilder( "## " + reportTitle + "\n\n");
+        report.append("## Ai service provided the following findings:\n");
+        report.append(result);
+
+        Files.writeString(outputPath, report);
+    }
+
+
     private String escape(String value) {
         return value.replace("|", "\\|").replace("\n", " ");
     }
