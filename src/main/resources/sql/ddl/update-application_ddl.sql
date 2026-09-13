@@ -1,0 +1,1 @@
+alter table applications add is_obsolete boolean FALSE NULL;

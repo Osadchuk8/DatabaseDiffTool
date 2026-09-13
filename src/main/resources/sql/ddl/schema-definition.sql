@@ -1,0 +1,1 @@
+-- reference schema definition to be compared
