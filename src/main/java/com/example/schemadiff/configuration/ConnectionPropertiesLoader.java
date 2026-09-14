@@ -23,30 +23,41 @@ public final class ConnectionPropertiesLoader {
 
         return new ToolConfiguration(
                 databaseSettings(properties, "source.db"),
-                Path.of(required(properties, "source.file.path")),
-                required(properties, "source.file.schema"),
+                Path.of(stringProp(properties, "source.file.path")),
+                stringProp(properties, "source.file.schema"),
                 databaseSettings(properties, "target.db"),
-                Path.of(required(properties, "report.path")),
-                required(properties, "groq.api.key"),
-                Path.of(required(properties, "report.ai.path"))
+                Path.of(stringProp(properties, "report.path")),
+                booleanProp(properties, "report.use.ai"),
+                stringProp(properties, "groq.api.key"),
+                Path.of(stringProp(properties, "report.ai.path"))
         );
     }
 
     private DatabaseConnectionSettings databaseSettings(Properties properties, String prefix) {
         return new DatabaseConnectionSettings(
-                required(properties, prefix + ".url"),
-                required(properties, prefix + ".user"),
+                stringProp(properties, prefix + ".url"),
+                stringProp(properties, prefix + ".user"),
                 resolve(properties.getProperty(prefix + ".password", ""), prefix + ".password"),
-                required(properties, prefix + ".schema")
+                stringProp(properties, prefix + ".schema")
         );
     }
 
-    private String required(Properties properties, String key) {
+    private String stringProp(Properties properties, String key) {
         String value = properties.getProperty(key);
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException("Missing required property: " + key);
         }
         return resolve(value, key).trim();
+    }
+
+    private boolean booleanProp(Properties properties, String key) {
+        String value = properties.getProperty(key);
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("Missing required property: " + key);
+        }
+        String textValue = resolve(value, key).trim();
+
+        return Boolean.parseBoolean(textValue);
     }
 
     private String resolve(String value, String propertyKey) {

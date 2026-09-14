@@ -8,6 +8,7 @@ public record ToolConfiguration(
         String sourceFileSchema,
         DatabaseConnectionSettings targetDatabase,
         Path reportPath,
+        boolean useAi,
         String aiApiKey,
         Path aiReportPath
 ) {

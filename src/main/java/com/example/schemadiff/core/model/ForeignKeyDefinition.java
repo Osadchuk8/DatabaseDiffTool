@@ -5,7 +5,7 @@ import java.util.List;
 public record ForeignKeyDefinition(
         String name,
         List<String> columns,
-        String referencedSchema,
+//        String referencedSchema,
         String referencedTable,
         List<String> referencedColumns,
         short updateRule,

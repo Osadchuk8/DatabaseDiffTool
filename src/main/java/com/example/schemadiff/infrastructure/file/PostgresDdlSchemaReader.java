@@ -69,7 +69,8 @@ public final class PostgresDdlSchemaReader {
                 Matcher inlineReference = INLINE_REFERENCE.matcher(trimmed);
                 if (inlineReference.find()) {
                     String name = "fk_" + tableName + "_" + column.name();
-                    ForeignKeyDefinition foreignKey = new ForeignKeyDefinition(name, List.of(column.name()), normalize(inlineReference.group(1)),
+                    ForeignKeyDefinition foreignKey = new ForeignKeyDefinition(name, List.of(column.name()),
+                            // normalize(inlineReference.group(1)), schema name
                             normalize(inlineReference.group(2)), normalizeList(inlineReference.group(3)), (short) 3, (short) 3);
                     foreignKeys.put(foreignKeySignature(foreignKey), withoutName(foreignKey));
                 }
@@ -122,7 +123,8 @@ public final class PostgresDdlSchemaReader {
         if (!matcher.find()) {
             throw new IllegalArgumentException("Could not parse foreign key definition: " + definition);
         }
-        return new ForeignKeyDefinition(normalize(matcher.group(1)), normalizeList(matcher.group(2)), normalize(matcher.group(3)),
+        return new ForeignKeyDefinition(normalize(matcher.group(1)), normalizeList(matcher.group(2)),
+                // normalize(matcher.group(3)), -- schema name
                 normalize(matcher.group(4)), normalizeList(matcher.group(5)), (short) 3, (short) 3);
     }
 
@@ -189,12 +191,12 @@ public final class PostgresDdlSchemaReader {
     }
 
     private String foreignKeySignature(ForeignKeyDefinition foreignKey) {
-        return String.join(",", foreignKey.columns()) + "->" + foreignKey.referencedSchema() + "."
+        return String.join(",", foreignKey.columns()) + "->"
                 + foreignKey.referencedTable() + "(" + String.join(",", foreignKey.referencedColumns()) + ")";
     }
 
     private ForeignKeyDefinition withoutName(ForeignKeyDefinition foreignKey) {
-        return new ForeignKeyDefinition("", foreignKey.columns(), foreignKey.referencedSchema(), foreignKey.referencedTable(),
+        return new ForeignKeyDefinition("", foreignKey.columns(), foreignKey.referencedTable(),
                 foreignKey.referencedColumns(), foreignKey.updateRule(), foreignKey.deleteRule());
     }
 

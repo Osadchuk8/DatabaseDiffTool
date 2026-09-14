@@ -35,29 +35,50 @@ public final class SchemaDiffApplication {
             SchemaSnapshot target = introspection.read(configuration.targetDatabase());
             SchemaSnapshot source = switch (arguments.sourceType()) {
                 case DATABASE -> introspection.read(configuration.sourceDatabase());
-                case FILE -> new PostgresDdlSchemaReader().read(configuration.sourceFile(), configuration.sourceFileSchema());
+                case FILE ->
+                        new PostgresDdlSchemaReader().read(configuration.sourceFile(), configuration.sourceFileSchema());
             };
-
             SchemaComparisonService comparisonService = new SchemaComparisonService();
             SchemaComparisonResult comparison = comparisonService.compare(source, target);
-
             ReportGenerationService reportService = new ReportGenerationService(new MarkdownReportWriter());
+
+            printHeader();
+            System.out.printf("\nComparing: %s to %s", comparison.sourceName(), comparison.targetName());
+
             reportService.write(comparison, configuration.reportPath());
+            printComparingMsg(comparison, configuration);
 
-
-            if(!comparison.matches()) {
+            if (!comparison.matches() && configuration.useAi()) {
+                System.out.println("Requesting AI-api suggestions ...");
                 AiApiRequestService aiApiRequestService = new AiApiRequestService(configuration.aiApiKey());
                 String stringComparisonResult = reportService.convertToString(comparison);
                 String aiFindings = aiApiRequestService.generate(AI_API_REQUEST + "\n" + stringComparisonResult);
                 reportService.write(aiFindings, AI_REPORT_TITLE, configuration.aiReportPath());
             }
 
-            System.out.printf("Compared %s to %s: %d difference(s).%nReport: %s%n", comparison.sourceName(),
-                    comparison.targetName(), comparison.differences().size(), configuration.reportPath().toAbsolutePath());
         } catch (Exception exception) {
             System.err.println("Schema comparison failed: " + exception.getMessage());
             System.exit(1);
         }
+        printFooter();
+    }
+
+    private static void printComparingMsg(SchemaComparisonResult comparison, ToolConfiguration configuration) {
+        System.out.println("\n");
+        System.out.printf("Compared %s to %s: %d difference(s)", comparison.sourceName(), comparison.targetName(), comparison.differences().size());
+        System.out.println("\nDiff-report: " +  configuration.reportPath().toAbsolutePath());
+    }
+
+
+    private static void printHeader() {
+        System.out.println("\n");
+        System.out.println("***********************************************");
+        System.out.println("*** Database schema DIFF tool (poc version) ***");
+        System.out.println("***********************************************");
+    }
+
+    private static void printFooter() {
+        System.out.println("\n*************** Done. ***************\n");
     }
 
     private static void printUsage() {
@@ -67,7 +88,7 @@ public final class SchemaDiffApplication {
         System.out.println("  --config=PATH  Configuration file (default: config/connection.properties).");
     }
 
-    private enum SourceType { DATABASE, FILE }
+    private enum SourceType {DATABASE, FILE}
 
     private record Arguments(SourceType sourceType, Path configurationPath, boolean help) {
         private static Arguments parse(String[] args) {

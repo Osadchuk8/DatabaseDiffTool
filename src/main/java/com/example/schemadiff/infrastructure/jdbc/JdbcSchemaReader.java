@@ -126,12 +126,12 @@ public final class JdbcSchemaReader {
     }
 
     private String foreignKeySignature(ForeignKeyDefinition foreignKey) {
-        return String.join(",", foreignKey.columns()) + "->" + foreignKey.referencedSchema() + "."
+        return String.join(",", foreignKey.columns()) + "->"
                 + foreignKey.referencedTable() + "(" + String.join(",", foreignKey.referencedColumns()) + ")";
     }
 
     private ForeignKeyDefinition withoutName(ForeignKeyDefinition foreignKey) {
-        return new ForeignKeyDefinition("", foreignKey.columns(), foreignKey.referencedSchema(), foreignKey.referencedTable(),
+        return new ForeignKeyDefinition("", foreignKey.columns(), foreignKey.referencedTable(),
                 foreignKey.referencedColumns(), foreignKey.updateRule(), foreignKey.deleteRule());
     }
 
@@ -162,7 +162,7 @@ public final class JdbcSchemaReader {
         }
 
         private ForeignKeyDefinition build() {
-            return new ForeignKeyDefinition(name, List.copyOf(columns.values()), referencedSchema, referencedTable,
+            return new ForeignKeyDefinition(name, List.copyOf(columns.values()), referencedTable,
                     List.copyOf(referencedColumns.values()), updateRule, deleteRule);
         }
     }
